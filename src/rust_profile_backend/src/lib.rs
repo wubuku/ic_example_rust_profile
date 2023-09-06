@@ -24,9 +24,14 @@ type Memory = VirtualMemory<DefaultMemoryImpl>;
 
 type EventStore = StableLog<events::Event, Memory, Memory>;
 
+
 //type IdStore = BTreeMap<String, Principal>;
 //type ProfileStore = BTreeMap<Principal, Profile>;
 type ProfileStore = StableBTreeMap<ProfileId, Profile, Memory>;
+
+const PROFILE_MEM_ID: MemoryId = MemoryId::new(0);
+const EVENT_IDX_MEM_ID: MemoryId = MemoryId::new(1);
+const EVENT_DATA_MEM_ID: MemoryId = MemoryId::new(2);
 
 thread_local! {
     //static PROFILE_STORE: RefCell<ProfileStore> = RefCell::default();
@@ -38,18 +43,18 @@ thread_local! {
         RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
 
     // Initialize a `StableBTreeMap` with `MemoryId(0)`.
-    static EVENT_STORE: RefCell<EventStore> = RefCell::new(
-        StableLog::init(
-            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(0))),
-            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(1))),
-        ).unwrap()
+    static PROFILE_STORE: RefCell<ProfileStore> = RefCell::new(
+        StableBTreeMap::init(
+            MEMORY_MANAGER.with(|m| m.borrow().get(PROFILE_MEM_ID)),
+        )
     );
 
     // Initialize a `StableBTreeMap` with `MemoryId(0)`.
-    static PROFILE_STORE: RefCell<ProfileStore> = RefCell::new(
-        StableBTreeMap::init(
-            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(2))),
-        )
+    static EVENT_STORE: RefCell<EventStore> = RefCell::new(
+        StableLog::init(
+            MEMORY_MANAGER.with(|m| m.borrow().get(EVENT_IDX_MEM_ID)),
+            MEMORY_MANAGER.with(|m| m.borrow().get(EVENT_DATA_MEM_ID)),
+        ).unwrap()
     );
 }
 
@@ -104,7 +109,9 @@ fn update(
     });
 }
 
-
+//
+// dfx canister call rust_profile_backend getEvent '(0)'
+//
 #[query(name = "getEvent")]
 fn get_event(idx: u64) -> Option<events::Event> {
     EVENT_STORE.with(|event_store| {
