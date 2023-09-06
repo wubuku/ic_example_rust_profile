@@ -4,8 +4,27 @@ type Profile = record {
     "keywords": vec text;
 };
 
+type ProfileId = principal;
+
+type ProfileUpdated = record {
+    "profile_id" : ProfileId;
+    "version" : nat64;
+    "name" : text;
+    "description" : text;
+    "keywords" : vec text;
+};
+
+type Event_E_ = variant {
+    ProfileEvent : ProfileEvent_E_;
+};
+
+type ProfileEvent_E_ = variant {
+    ProfileUpdated : ProfileUpdated;
+};
+
 service : {
-    "getSelf": () -> (Profile) query;
+    "getSelf": () -> (opt Profile) query;
+    "getEvent": (nat64) -> (opt Event_E_) query;
     //"get": (text) -> (Profile) query;
     //"update": (Profile) -> ();
     "update": (text, text, vec text) -> ();

@@ -14,8 +14,7 @@ use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableLog};
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 
 use profile::Profile;
-
-use crate::profile::ProfileId;
+use profile::ProfileId;
 
 mod profile;
 mod events;
@@ -55,16 +54,10 @@ thread_local! {
 }
 
 #[query(name = "getSelf")]
-fn get_self() -> Profile {
+fn get_self() -> Option<Profile> {
     let id = ic_cdk::api::caller();
     PROFILE_STORE.with(|profile_store| {
-        // profile_store
-        //     .borrow()
-        //     .get(&id)
-        //     .cloned().unwrap_or_default()
-        let r = profile_store.borrow().get(&ProfileId(id)).unwrap_or_default();
-        //ic_cdk::println!("Get in backend for key={} - result={:?}", key, r);
-        r
+        profile_store.borrow().get(&ProfileId(id))
     })
 }
 
@@ -109,4 +102,12 @@ fn update(
             profile,
         );
     });
+}
+
+
+#[query(name = "getEvent")]
+fn get_event(idx: u64) -> Option<events::Event> {
+    EVENT_STORE.with(|event_store| {
+        event_store.borrow().get(idx)
+    })
 }
